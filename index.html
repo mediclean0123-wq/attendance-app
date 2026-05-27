@@ -53,6 +53,24 @@ function endWork(){const raw=localStorage.getItem("working");if(!raw){alert(t("p
 function render(){const records=JSON.parse(localStorage.getItem("records")||"[]");history.innerHTML="";let total=0;records.forEach(r=>total+=Number(r.amount||0));const today=new Date(),ym=today.toISOString().slice(0,7);const monthRecords=records.filter(r=>(r.dateISO||"").slice(0,7)===ym||!r.dateISO);const daysInMonth=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();summary.innerHTML=`${t("workDays")}: ${monthRecords.length}<br>${t("offDays")}: ${daysInMonth-monthRecords.length}<br>${t("totalAmount")}: ¥${total.toLocaleString()}`;if(records.length===0){history.innerHTML=`<div class="empty">${t("noHistory")}</div>`;return}records.slice().reverse().forEach(r=>{const amount=Number(r.amount||0),cls=amount>=0?"amountPlus":"amountMinus";history.innerHTML+=`<div class="historyItem"><div class="historyTop"><div>${r.date}${r.edited?"（修正済）":""}</div><div class="${cls}">¥${amount.toLocaleString()}</div></div><div class="historyGrid"><div><span class="label">${t("startTime")}</span><span class="value">${r.start}</span></div><div><span class="label">${t("endTime")}</span><span class="value">${r.end}</span></div><div><span class="label">${t("hours")}</span><span class="value">${r.adjustmentHours||0}h</span></div><div style="grid-column:1/-1"><span class="label">${t("place")}</span><span class="value">${r.place||""}</span></div></div></div>`})}
 function downloadCSV(){const records=JSON.parse(localStorage.getItem("records")||"[]");let csv="Staff,Date,Start,End,WorkedHours,AdjustmentHours,Place,Amount,Edited\n";records.forEach(r=>csv+=`"${r.staff||""}","${r.dateISO||r.date}","${r.start}","${r.end}","${r.workedHours||""}","${r.adjustmentHours||0}","${r.place||""}","${r.amount||0}","${r.edited?'YES':'NO'}"\n`);const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=t("csvName");a.click()}
 const savedStaff=localStorage.getItem("staffName");if(savedStaff)staffName.value=savedStaff;applyLanguage();getLocation();
+</script<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAPPRrNAR_XIJq8C39odZ4jaSeyJqsKRiY",
+    authDomain: "attendance-app-333ba.firebaseapp.com",
+    projectId: "attendance-app-333ba",
+    storageBucket: "attendance-app-333ba.firebasestorage.app",
+    messagingSenderId: "935750890339",
+    appId: "1:935750890339:web:386b43200f88dd3e2c1956"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
 </script>
 </body>
 </html>
