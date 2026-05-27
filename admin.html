@@ -48,7 +48,9 @@ saveRecords(records);closeEdit();setupMonths();renderAdmin()}
 function deleteRecord(id){if(!confirm("この勤務履歴を削除しますか？"))return;saveRecords(getRecords().filter(r=>r.id!==id));setupMonths();renderAdmin()}
 function downloadAdminCSV(){const selectedMonth=monthSelect.value;const records=getRecords().filter(r=>getMonthKey(r)===selectedMonth);let csv="Staff,Date,Start,End,WorkedHours,AdjustmentHours,Place,Amount,Edited,EditReason\n";records.forEach(r=>csv+=`"${r.staff||""}","${r.dateISO||r.date}","${r.start}","${r.end}","${r.workedHours||""}","${r.adjustmentHours||0}","${r.place||""}","${r.amount||0}","${r.edited?'YES':'NO'}","${r.editReason||""}"\n`);const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`attendance_${selectedMonth}.csv`;a.click()}
 if(sessionStorage.getItem("adminLogin")==="true")showAdmin();
-</script<script type="module">
+</script>
+  
+  <script type="module">
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
   // TODO: Add SDKs for Firebase products that you want to use
@@ -66,6 +68,7 @@ if(sessionStorage.getItem("adminLogin")==="true")showAdmin();
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-</script>
+  </script>
+
 </body>
 </html>
