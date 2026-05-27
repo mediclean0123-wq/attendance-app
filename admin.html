@@ -1,76 +1,189 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard</title>
 <style>
-body{
-font-family:Arial;
-padding:20px;
-background:#f4f4f4;
-}
-.card{
-background:white;
-padding:20px;
-border-radius:12px;
-margin-bottom:16px;
-}
-table{
-width:100%;
-border-collapse:collapse;
-}
-th,td{
-border-bottom:1px solid #ddd;
-padding:10px;
-text-align:center;
-}
+:root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--blue:#2563eb;--red:#dc2626;--green:#16a34a;}
+*{box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:18px;}
+.container{max-width:760px;margin:0 auto;}
+.card{background:white;padding:20px;border-radius:18px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.08);}
+h1,h2{margin:0 0 16px;}
+input,select,button{width:100%;padding:14px;border-radius:12px;border:1px solid #d1d5db;font-size:16px;margin:8px 0;}
+button{border:none;background:var(--blue);color:#fff;font-weight:700;cursor:pointer;}
+.logout{background:#6b7280;}
+.hidden{display:none;}
+.error{color:var(--red);font-size:14px;}
+.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.summaryBox{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff;}
+.name{font-size:18px;font-weight:800;margin-bottom:8px;}
+.small{color:var(--muted);font-size:14px;line-height:1.7;}
+.amountPlus{color:var(--green);font-weight:800;}
+.amountMinus{color:var(--red);font-weight:800;}
+.historyItem{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:#fff;}
+.top{display:flex;justify-content:space-between;gap:12px;font-weight:800;margin-bottom:8px;}
+@media(max-width:600px){.summaryGrid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
+<div class="container">
 
-<div class="card">
-<h1>管理画面</h1>
-<div id="summary"></div>
+<div id="loginBox" class="card">
+  <h1>管理者ログイン</h1>
+  <div class="small">管理画面を見るにはパスワードを入力してください。</div>
+  <input type="password" id="password" placeholder="管理者パスワード">
+  <button onclick="login()">ログイン</button>
+  <div id="error" class="error"></div>
 </div>
 
-<div class="card">
-<table>
-<thead>
-<tr>
-<th>スタッフ</th>
-<th>日付</th>
-<th>調整額</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
-</table>
+<div id="adminBox" class="hidden">
+  <div class="card">
+    <h1>管理画面</h1>
+    <select id="monthSelect" onchange="renderAdmin()"></select>
+    <button onclick="downloadAdminCSV()">月別CSV出力</button>
+    <button class="logout" onclick="logout()">ログアウト</button>
+  </div>
+
+  <div class="card">
+    <h2>スタッフ別 月間集計</h2>
+    <div id="staffSummary" class="summaryGrid"></div>
+  </div>
+
+  <div class="card">
+    <h2>勤務履歴</h2>
+    <div id="historyList"></div>
+  </div>
+</div>
+
 </div>
 
 <script>
+const ADMIN_PASSWORD = "1234"; // 必ず変更してください
 
-const records = JSON.parse(localStorage.getItem("records") || "[]");
+function login(){
+  const input = document.getElementById("password").value;
+  if(input === ADMIN_PASSWORD){
+    sessionStorage.setItem("adminLogin","true");
+    showAdmin();
+  }else{
+    document.getElementById("error").innerText = "パスワードが違います";
+  }
+}
+function logout(){
+  sessionStorage.removeItem("adminLogin");
+  location.reload();
+}
+function showAdmin(){
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("adminBox").classList.remove("hidden");
+  setupMonths();
+  renderAdmin();
+}
+function getRecords(){
+  return JSON.parse(localStorage.getItem("records") || "[]");
+}
+function getMonthKey(record){
+  if(record.dateISO) return record.dateISO.slice(0,7);
+  const d = new Date(record.date);
+  if(!isNaN(d)) return d.toISOString().slice(0,7);
+  return new Date().toISOString().slice(0,7);
+}
+function setupMonths(){
+  const records = getRecords();
+  const monthSelect = document.getElementById("monthSelect");
+  const current = new Date().toISOString().slice(0,7);
+  const months = Array.from(new Set([current, ...records.map(getMonthKey)])).sort().reverse();
+  monthSelect.innerHTML = "";
+  months.forEach(m=>{
+    monthSelect.innerHTML += `<option value="${m}">${m}</option>`;
+  });
+}
+function renderAdmin(){
+  const selectedMonth = document.getElementById("monthSelect").value;
+  const records = getRecords().filter(r=>getMonthKey(r) === selectedMonth);
+  const staffMap = {};
 
-let total = 0;
+  records.forEach(r=>{
+    const staff = r.staff || "未入力";
+    if(!staffMap[staff]){
+      staffMap[staff] = {workDays:0, workedHours:0, adjustmentHours:0, amount:0};
+    }
+    staffMap[staff].workDays += 1;
+    staffMap[staff].workedHours += Number(r.workedHours || 0);
+    staffMap[staff].adjustmentHours += Number(r.adjustmentHours || 0);
+    staffMap[staff].amount += Number(r.amount || 0);
+  });
 
-records.forEach(r=> total += r.amount);
+  const summary = document.getElementById("staffSummary");
+  summary.innerHTML = "";
 
-document.getElementById("summary").innerHTML =
-"総調整額: ¥" + total;
+  const staffNames = Object.keys(staffMap);
+  if(staffNames.length === 0){
+    summary.innerHTML = `<div class="small">この月の勤務データはありません。</div>`;
+  }else{
+    staffNames.forEach(name=>{
+      const s = staffMap[name];
+      const amountClass = s.amount >= 0 ? "amountPlus" : "amountMinus";
+      summary.innerHTML += `
+        <div class="summaryBox">
+          <div class="name">${name}</div>
+          <div class="small">
+            稼働日数: ${s.workDays}日<br>
+            月間稼働時間: ${s.workedHours.toFixed(1)}h<br>
+            超過/不足時間: ${s.adjustmentHours}h<br>
+            超過分給与: <span class="${amountClass}">¥${s.amount.toLocaleString()}</span>
+          </div>
+        </div>
+      `;
+    });
+  }
 
-const table = document.getElementById("table");
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+  if(records.length === 0){
+    list.innerHTML = `<div class="small">勤務履歴はありません。</div>`;
+    return;
+  }
 
-records.forEach(r=>{
-table.innerHTML += `
-<tr>
-<td>${r.staff}</td>
-<td>${r.date}</td>
-<td>¥${r.amount}</td>
-</tr>
-`;
-});
+  records.slice().reverse().forEach(r=>{
+    const amount = Number(r.amount || 0);
+    const amountClass = amount >= 0 ? "amountPlus" : "amountMinus";
+    list.innerHTML += `
+      <div class="historyItem">
+        <div class="top">
+          <span>${r.staff || "未入力"} / ${r.dateISO || r.date}</span>
+          <span class="${amountClass}">¥${amount.toLocaleString()}</span>
+        </div>
+        <div class="small">
+          時間: ${r.start} - ${r.end}<br>
+          稼働時間: ${r.workedHours || "-"}h<br>
+          超過/不足: ${r.adjustmentHours || 0}h<br>
+          場所: ${r.place || ""}
+        </div>
+      </div>
+    `;
+  });
+}
+function downloadAdminCSV(){
+  const selectedMonth = document.getElementById("monthSelect").value;
+  const records = getRecords().filter(r=>getMonthKey(r) === selectedMonth);
+  let csv = "Staff,Date,Start,End,WorkedHours,AdjustmentHours,Place,Amount\n";
+  records.forEach(r=>{
+    csv += `"${r.staff || ""}","${r.dateISO || r.date}","${r.start}","${r.end}","${r.workedHours || ""}","${r.adjustmentHours || 0}","${r.place || ""}","${r.amount || 0}"\n`;
+  });
+  const blob = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `attendance_${selectedMonth}.csv`;
+  a.click();
+}
 
+if(sessionStorage.getItem("adminLogin")==="true"){
+  showAdmin();
+}
 </script>
-
 </body>
 </html>
