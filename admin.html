@@ -6,184 +6,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard</title>
 <style>
-:root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--blue:#2563eb;--red:#dc2626;--green:#16a34a;}
-*{box-sizing:border-box;}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:18px;}
-.container{max-width:760px;margin:0 auto;}
-.card{background:white;padding:20px;border-radius:18px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.08);}
-h1,h2{margin:0 0 16px;}
-input,select,button{width:100%;padding:14px;border-radius:12px;border:1px solid #d1d5db;font-size:16px;margin:8px 0;}
-button{border:none;background:var(--blue);color:#fff;font-weight:700;cursor:pointer;}
-.logout{background:#6b7280;}
-.hidden{display:none;}
-.error{color:var(--red);font-size:14px;}
-.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.summaryBox{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff;}
-.name{font-size:18px;font-weight:800;margin-bottom:8px;}
-.small{color:var(--muted);font-size:14px;line-height:1.7;}
-.amountPlus{color:var(--green);font-weight:800;}
-.amountMinus{color:var(--red);font-weight:800;}
-.historyItem{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:#fff;}
-.top{display:flex;justify-content:space-between;gap:12px;font-weight:800;margin-bottom:8px;}
-@media(max-width:600px){.summaryGrid{grid-template-columns:1fr;}}
+:root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--blue:#2563eb;--red:#dc2626;--green:#16a34a;--orange:#f59e0b}
+*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:18px}.container{max-width:760px;margin:0 auto}.card{background:#fff;padding:20px;border-radius:18px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.08)}h1,h2{margin:0 0 16px}input,select,button,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid #d1d5db;font-size:16px;margin:8px 0}button{border:none;background:var(--blue);color:#fff;font-weight:700;cursor:pointer}.logout{background:#6b7280}.delete{background:var(--red)}.edit{background:var(--orange)}.save{background:var(--green)}.hidden{display:none}.error{color:var(--red);font-size:14px}.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.summaryBox{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.name{font-size:18px;font-weight:800;margin-bottom:8px}.small{color:var(--muted);font-size:14px;line-height:1.7}.amountPlus{color:var(--green);font-weight:800}.amountMinus{color:var(--red);font-weight:800}.historyItem{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:#fff}.top{display:flex;justify-content:space-between;gap:12px;font-weight:800;margin-bottom:8px}.badge{display:inline-block;background:#fef3c7;color:#92400e;border-radius:999px;padding:3px 8px;font-size:12px;margin-left:4px}.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:18px}.modalContent{background:white;border-radius:18px;padding:20px;width:100%;max-width:520px;max-height:90vh;overflow:auto}@media(max-width:600px){.summaryGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="container">
-
-<div id="loginBox" class="card">
-  <h1>管理者ログイン</h1>
-  <div class="small">管理画面を見るにはパスワードを入力してください。</div>
-  <input type="password" id="password" placeholder="管理者パスワード">
-  <button onclick="login()">ログイン</button>
-  <div id="error" class="error"></div>
-</div>
-
+<div id="loginBox" class="card"><h1>管理者ログイン</h1><div class="small">管理画面を見るにはパスワードを入力してください。</div><input type="password" id="password" placeholder="管理者パスワード"><button onclick="login()">ログイン</button><div id="error" class="error"></div></div>
 <div id="adminBox" class="hidden">
-  <div class="card">
-    <h1>管理画面</h1>
-    <select id="monthSelect" onchange="renderAdmin()"></select>
-    <button onclick="downloadAdminCSV()">月別CSV出力</button>
-    <button class="logout" onclick="logout()">ログアウト</button>
-  </div>
-
-  <div class="card">
-    <h2>スタッフ別 月間集計</h2>
-    <div id="staffSummary" class="summaryGrid"></div>
-  </div>
-
-  <div class="card">
-    <h2>勤務履歴</h2>
-    <div id="historyList"></div>
-  </div>
+<div class="card"><h1>管理画面</h1><select id="monthSelect" onchange="renderAdmin()"></select><button onclick="downloadAdminCSV()">月別CSV出力</button><button class="logout" onclick="logout()">ログアウト</button></div>
+<div class="card"><h2>スタッフ別 月間集計</h2><div id="staffSummary" class="summaryGrid"></div></div>
+<div class="card"><h2>勤務履歴</h2><div id="historyList"></div></div>
 </div>
-
 </div>
-
+<div id="editModal" class="modal"><div class="modalContent"><h2>打刻修正</h2><input type="hidden" id="editId"><label>スタッフ名</label><input id="editStaff"><label>日付</label><input type="date" id="editDate"><label>出勤時間</label><input type="time" id="editStart"><label>退勤時間</label><input type="time" id="editEnd"><label>修正理由</label><textarea id="editReason" placeholder="例：退勤押し忘れのため修正"></textarea><button class="save" onclick="saveEdit()">保存</button><button class="logout" onclick="closeEdit()">キャンセル</button></div></div>
 <script>
-const ADMIN_PASSWORD = "1234"; // 必ず変更してください
-
-function login(){
-  const input = document.getElementById("password").value;
-  if(input === ADMIN_PASSWORD){
-    sessionStorage.setItem("adminLogin","true");
-    showAdmin();
-  }else{
-    document.getElementById("error").innerText = "パスワードが違います";
-  }
-}
-function logout(){
-  sessionStorage.removeItem("adminLogin");
-  location.reload();
-}
-function showAdmin(){
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("adminBox").classList.remove("hidden");
-  setupMonths();
-  renderAdmin();
-}
-function getRecords(){
-  return JSON.parse(localStorage.getItem("records") || "[]");
-}
-function getMonthKey(record){
-  if(record.dateISO) return record.dateISO.slice(0,7);
-  const d = new Date(record.date);
-  if(!isNaN(d)) return d.toISOString().slice(0,7);
-  return new Date().toISOString().slice(0,7);
-}
-function setupMonths(){
-  const records = getRecords();
-  const monthSelect = document.getElementById("monthSelect");
-  const current = new Date().toISOString().slice(0,7);
-  const months = Array.from(new Set([current, ...records.map(getMonthKey)])).sort().reverse();
-  monthSelect.innerHTML = "";
-  months.forEach(m=>{
-    monthSelect.innerHTML += `<option value="${m}">${m}</option>`;
-  });
-}
+const ADMIN_PASSWORD="1234"; // 必ず変更してください
+function login(){if(password.value===ADMIN_PASSWORD){sessionStorage.setItem("adminLogin","true");showAdmin()}else error.innerText="パスワードが違います"}
+function logout(){sessionStorage.removeItem("adminLogin");location.reload()}
+function showAdmin(){loginBox.classList.add("hidden");adminBox.classList.remove("hidden");setupMonths();renderAdmin()}
+function getRecords(){return JSON.parse(localStorage.getItem("records")||"[]")}
+function saveRecords(records){localStorage.setItem("records",JSON.stringify(records))}
+function getMonthKey(r){return (r.dateISO||new Date().toISOString().slice(0,10)).slice(0,7)}
+function setupMonths(){const records=getRecords();const current=new Date().toISOString().slice(0,7);const months=Array.from(new Set([current,...records.map(getMonthKey)])).sort().reverse();monthSelect.innerHTML="";months.forEach(m=>monthSelect.innerHTML+=`<option value="${m}">${m}</option>`)}
+function calcAdjustment(start,end){const workedHours=(end-start)/(1000*60*60);let diff=workedHours-9,h=0;if(diff>0){h=Math.floor(diff);if(diff-h>=.5)h+=1}else{h=Math.ceil(diff);if(Math.abs(diff-h)>=.5)h-=1}return{workedHours:Number(workedHours.toFixed(2)),adjustmentHours:h,amount:h*1000}}
+function timeToInput(t){if(!t)return"";const parts=t.split(":");return `${parts[0].padStart(2,"0")}:${parts[1].padStart(2,"0")}`}
 function renderAdmin(){
-  const selectedMonth = document.getElementById("monthSelect").value;
-  const records = getRecords().filter(r=>getMonthKey(r) === selectedMonth);
-  const staffMap = {};
-
-  records.forEach(r=>{
-    const staff = r.staff || "未入力";
-    if(!staffMap[staff]){
-      staffMap[staff] = {workDays:0, workedHours:0, adjustmentHours:0, amount:0};
-    }
-    staffMap[staff].workDays += 1;
-    staffMap[staff].workedHours += Number(r.workedHours || 0);
-    staffMap[staff].adjustmentHours += Number(r.adjustmentHours || 0);
-    staffMap[staff].amount += Number(r.amount || 0);
-  });
-
-  const summary = document.getElementById("staffSummary");
-  summary.innerHTML = "";
-
-  const staffNames = Object.keys(staffMap);
-  if(staffNames.length === 0){
-    summary.innerHTML = `<div class="small">この月の勤務データはありません。</div>`;
-  }else{
-    staffNames.forEach(name=>{
-      const s = staffMap[name];
-      const amountClass = s.amount >= 0 ? "amountPlus" : "amountMinus";
-      summary.innerHTML += `
-        <div class="summaryBox">
-          <div class="name">${name}</div>
-          <div class="small">
-            稼働日数: ${s.workDays}日<br>
-            月間稼働時間: ${s.workedHours.toFixed(1)}h<br>
-            超過/不足時間: ${s.adjustmentHours}h<br>
-            超過分給与: <span class="${amountClass}">¥${s.amount.toLocaleString()}</span>
-          </div>
-        </div>
-      `;
-    });
-  }
-
-  const list = document.getElementById("historyList");
-  list.innerHTML = "";
-  if(records.length === 0){
-    list.innerHTML = `<div class="small">勤務履歴はありません。</div>`;
-    return;
-  }
-
-  records.slice().reverse().forEach(r=>{
-    const amount = Number(r.amount || 0);
-    const amountClass = amount >= 0 ? "amountPlus" : "amountMinus";
-    list.innerHTML += `
-      <div class="historyItem">
-        <div class="top">
-          <span>${r.staff || "未入力"} / ${r.dateISO || r.date}</span>
-          <span class="${amountClass}">¥${amount.toLocaleString()}</span>
-        </div>
-        <div class="small">
-          時間: ${r.start} - ${r.end}<br>
-          稼働時間: ${r.workedHours || "-"}h<br>
-          超過/不足: ${r.adjustmentHours || 0}h<br>
-          場所: ${r.place || ""}
-        </div>
-      </div>
-    `;
-  });
+const selectedMonth=monthSelect.value;const records=getRecords().filter(r=>getMonthKey(r)===selectedMonth);const staffMap={};
+records.forEach(r=>{const staff=r.staff||"未入力";if(!staffMap[staff])staffMap[staff]={workDays:0,workedHours:0,adjustmentHours:0,amount:0};staffMap[staff].workDays++;staffMap[staff].workedHours+=Number(r.workedHours||0);staffMap[staff].adjustmentHours+=Number(r.adjustmentHours||0);staffMap[staff].amount+=Number(r.amount||0)});
+staffSummary.innerHTML="";const names=Object.keys(staffMap);if(names.length===0)staffSummary.innerHTML=`<div class="small">この月の勤務データはありません。</div>`;else names.forEach(name=>{const s=staffMap[name],cls=s.amount>=0?"amountPlus":"amountMinus";staffSummary.innerHTML+=`<div class="summaryBox"><div class="name">${name}</div><div class="small">稼働日数: ${s.workDays}日<br>月間稼働時間: ${s.workedHours.toFixed(1)}h<br>超過/不足時間: ${s.adjustmentHours}h<br>超過分給与: <span class="${cls}">¥${s.amount.toLocaleString()}</span></div></div>`});
+historyList.innerHTML="";if(records.length===0){historyList.innerHTML=`<div class="small">勤務履歴はありません。</div>`;return}
+records.slice().reverse().forEach(r=>{const amount=Number(r.amount||0),cls=amount>=0?"amountPlus":"amountMinus";historyList.innerHTML+=`<div class="historyItem"><div class="top"><span>${r.staff||"未入力"} / ${r.dateISO||r.date} ${r.edited?'<span class="badge">修正済</span>':''}</span><span class="${cls}">¥${amount.toLocaleString()}</span></div><div class="small">時間: ${r.start} - ${r.end}<br>稼働時間: ${r.workedHours||"-"}h<br>超過/不足: ${r.adjustmentHours||0}h<br>場所: ${r.place||""}${r.editReason?`<br>修正理由: ${r.editReason}`:""}</div><button class="edit" onclick="openEdit('${r.id}')">修正</button><button class="delete" onclick="deleteRecord('${r.id}')">削除</button></div>`})
 }
-function downloadAdminCSV(){
-  const selectedMonth = document.getElementById("monthSelect").value;
-  const records = getRecords().filter(r=>getMonthKey(r) === selectedMonth);
-  let csv = "Staff,Date,Start,End,WorkedHours,AdjustmentHours,Place,Amount\n";
-  records.forEach(r=>{
-    csv += `"${r.staff || ""}","${r.dateISO || r.date}","${r.start}","${r.end}","${r.workedHours || ""}","${r.adjustmentHours || 0}","${r.place || ""}","${r.amount || 0}"\n`;
-  });
-  const blob = new Blob(["\uFEFF" + csv], {type:"text/csv;charset=utf-8;"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `attendance_${selectedMonth}.csv`;
-  a.click();
-}
-
-if(sessionStorage.getItem("adminLogin")==="true"){
-  showAdmin();
-}
+function openEdit(id){const r=getRecords().find(x=>x.id===id);if(!r)return;editId.value=r.id;editStaff.value=r.staff||"";editDate.value=r.dateISO||new Date().toISOString().slice(0,10);editStart.value=timeToInput(r.start);editEnd.value=timeToInput(r.end);editReason.value=r.editReason||"";editModal.style.display="flex"}
+function closeEdit(){editModal.style.display="none"}
+function saveEdit(){
+const id=editId.value;let records=getRecords();const idx=records.findIndex(r=>r.id===id);if(idx<0)return;const before=JSON.parse(JSON.stringify(records[idx]));const d=editDate.value,startTime=editStart.value,endTime=editEnd.value;if(!d||!startTime||!endTime){alert("日付・時間を入力してください");return}
+const start=new Date(`${d}T${startTime}:00`),end=new Date(`${d}T${endTime}:00`);if(end<=start){alert("退勤時間は出勤時間より後にしてください");return}
+const c=calcAdjustment(start,end);records[idx]={...records[idx],staff:editStaff.value.trim(),dateISO:d,date:new Date(`${d}T00:00:00`).toLocaleDateString(),start:start.toLocaleTimeString(),end:end.toLocaleTimeString(),startISO:start.toISOString(),endISO:end.toISOString(),workedHours:c.workedHours,adjustmentHours:c.adjustmentHours,amount:c.amount,edited:true,editReason:editReason.value.trim(),editHistory:[...(records[idx].editHistory||[]),{editedAt:new Date().toISOString(),reason:editReason.value.trim(),before}]};
+saveRecords(records);closeEdit();setupMonths();renderAdmin()}
+function deleteRecord(id){if(!confirm("この勤務履歴を削除しますか？"))return;saveRecords(getRecords().filter(r=>r.id!==id));setupMonths();renderAdmin()}
+function downloadAdminCSV(){const selectedMonth=monthSelect.value;const records=getRecords().filter(r=>getMonthKey(r)===selectedMonth);let csv="Staff,Date,Start,End,WorkedHours,AdjustmentHours,Place,Amount,Edited,EditReason\n";records.forEach(r=>csv+=`"${r.staff||""}","${r.dateISO||r.date}","${r.start}","${r.end}","${r.workedHours||""}","${r.adjustmentHours||0}","${r.place||""}","${r.amount||0}","${r.edited?'YES':'NO'}","${r.editReason||""}"\n`);const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`attendance_${selectedMonth}.csv`;a.click()}
+if(sessionStorage.getItem("adminLogin")==="true")showAdmin();
 </script>
 </body>
 </html>
