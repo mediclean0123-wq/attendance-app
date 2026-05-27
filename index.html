@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance App Complete</title>
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f4f4;
+    margin:0;
+    padding:20px;
+}
+.container{
+    max-width:500px;
+    margin:auto;
+}
+.card{
+    background:white;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:16px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+button{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    margin-top:10px;
+    cursor:pointer;
+}
+.start{background:#22c55e;color:white;}
+.end{background:#ef4444;color:white;}
+.export{background:#2563eb;color:white;}
+input,select{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    margin-top:10px;
+}
+.small{color:#666;font-size:14px;}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+th,td{
+    border-bottom:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+    font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="card">
+<h2 id="title">勤務管理</h2>
+
+<select onchange="changeLanguage(this.value)">
+<option value="ja">日本語</option>
+<option value="en">English</option>
+<option value="np">नेपाली</option>
+</select>
+
+<input type="text" id="staffName" placeholder="スタッフ名">
+
+<div class="small" id="gpsInfo">GPS未取得</div>
+
+<button class="start" onclick="startWork()">🟢 START WORK</button>
+<button class="end" onclick="endWork()">🔴 END WORK</button>
+<button class="export" onclick="downloadCSV()">CSV EXPORT</button>
+
+<div class="small" id="status">未出勤</div>
+</div>
+
+<div class="card">
+<h2 id="summaryTitle">今月の集計</h2>
+<div id="summary"></div>
+</div>
+
+<div class="card">
+<h2 id="historyTitle">勤務履歴</h2>
+
+<table>
+<thead>
+<tr>
+<th>日付</th>
+<th>開始</th>
+<th>終了</th>
+<th>位置</th>
+<th>調整</th>
+</tr>
+</thead>
+<tbody id="history"></tbody>
+</table>
+
+</div>
+
+</div>
+
+<script>
+let currentLat = "";
+let currentLng = "";
+
+navigator.geolocation.getCurrentPosition((pos)=>{
+    currentLat = pos.coords.latitude.toFixed(5);
+    currentLng = pos.coords.longitude.toFixed(5);
+
+    document.getElementById("gpsInfo").innerText =
+    "GPS: " + currentLat + ", " + currentLng;
+});
+
+function changeLanguage(lang){
+
+    const texts = {
+        ja:{
+            title:"勤務管理",
+            summary:"今月の集計",
+            history:"勤務履歴"
+        },
+        en:{
+            title:"Attendance",
+            summary:"Monthly Summary",
+            history:"Work History"
+        },
+        np:{
+            title:"काम व्यवस्थापन",
+            summary:"मासिक सारांश",
+            history:"कार्य इतिहास"
+        }
+    };
+
+    document.getElementById("title").innerText = texts[lang].title;
+    document.getElementById("summaryTitle").innerText = texts[lang].summary;
+    document.getElementById("historyTitle").innerText = texts[lang].history;
+}
+
+function startWork(){
+    const start = new Date();
+
+    localStorage.setItem("working", JSON.stringify({
+        start:start.toISOString(),
+        lat:currentLat,
+        lng:currentLng
+    }));
+
+    document.getElementById("status").innerText =
+    "出勤中: " + start.toLocaleTimeString();
+}
+
+function endWork(){
+
+    const data = JSON.parse(localStorage.getItem("working"));
+
+    if(!data){
+        alert("先に出勤してください");
+        return;
+    }
+
+    const end = new Date();
+    const start = new Date(data.start);
+
+    const workedHours = (end - start)/(1000*60*60);
+
+    let diff = workedHours - 9;
+
+    let rounded = 0;
+
+    if(diff > 0){
+        rounded = Math.floor(diff);
+        if(diff-rounded >= 0.5){
+            rounded += 1;
+        }
+    }else{
+        rounded = Math.ceil(diff);
+        if(Math.abs(diff-rounded)>=0.5){
+            rounded -= 1;
+        }
+    }
+
+    const amount = rounded * 1000;
+
+    const record = {
+        staff:document.getElementById("staffName").value,
+        date:new Date().toLocaleDateString(),
+        start:start.toLocaleTimeString(),
+        end:end.toLocaleTimeString(),
+        gps:data.lat + "," + data.lng,
+        amount:amount
+    };
+
+    let records = JSON.parse(localStorage.getItem("records") || "[]");
+
+    records.push(record);
+
+    localStorage.setItem("records", JSON.stringify(records));
+
+    localStorage.removeItem("working");
+
+    render();
+}
+
+function render(){
+
+    const records = JSON.parse(localStorage.getItem("records") || "[]");
+
+    const history = document.getElementById("history");
+
+    history.innerHTML = "";
+
+    let total = 0;
+
+    records.forEach(r=>{
+
+        total += r.amount;
+
+        history.innerHTML += `
+        <tr>
+            <td>${r.date}</td>
+            <td>${r.start}</td>
+            <td>${r.end}</td>
+            <td>${r.gps}</td>
+            <td>¥${r.amount}</td>
+        </tr>
+        `;
+    });
+
+    const today = new Date();
+
+    const daysInMonth =
+    new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+
+    const workDays = records.length;
+    const offDays = daysInMonth - workDays;
+
+    document.getElementById("summary").innerHTML = `
+    稼働日数: ${workDays}日<br>
+    休日: ${offDays}日<br>
+    合計調整額: ¥${total}
+    `;
+}
+
+function downloadCSV(){
+
+    const records = JSON.parse(localStorage.getItem("records") || "[]");
+
+    let csv = "Staff,Date,Start,End,GPS,Amount\n";
+
+    records.forEach(r=>{
+        csv += `${r.staff},${r.date},${r.start},${r.end},${r.gps},${r.amount}\n`;
+    });
+
+    const blob = new Blob([csv], {type:'text/csv'});
+
+    const a = document.createElement('a');
+
+    a.href = URL.createObjectURL(blob);
+
+    a.download = "attendance.csv";
+
+    a.click();
+}
+
+render();
+
+</script>
+
+</body>
+</html>

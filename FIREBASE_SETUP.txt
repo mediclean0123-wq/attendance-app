@@ -1,0 +1,22 @@
+
+Firebase Setup Guide
+
+1. Create Firebase Project
+https://firebase.google.com/
+
+2. Enable:
+- Authentication
+- Firestore Database
+- Hosting
+
+3. Replace Firebase config inside index.html
+
+4. Deploy with:
+firebase deploy
+
+This version already supports:
+- GPS
+- CSV Export
+- Multilanguage
+- Attendance Logs
+- Monthly Summary

@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<style>
+body{
+font-family:Arial;
+padding:20px;
+background:#f4f4f4;
+}
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+margin-bottom:16px;
+}
+table{
+width:100%;
+border-collapse:collapse;
+}
+th,td{
+border-bottom:1px solid #ddd;
+padding:10px;
+text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h1>管理画面</h1>
+<div id="summary"></div>
+</div>
+
+<div class="card">
+<table>
+<thead>
+<tr>
+<th>スタッフ</th>
+<th>日付</th>
+<th>調整額</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+</div>
+
+<script>
+
+const records = JSON.parse(localStorage.getItem("records") || "[]");
+
+let total = 0;
+
+records.forEach(r=> total += r.amount);
+
+document.getElementById("summary").innerHTML =
+"総調整額: ¥" + total;
+
+const table = document.getElementById("table");
+
+records.forEach(r=>{
+table.innerHTML += `
+<tr>
+<td>${r.staff}</td>
+<td>${r.date}</td>
+<td>¥${r.amount}</td>
+</tr>
+`;
+});
+
+</script>
+
+</body>
+</html>
